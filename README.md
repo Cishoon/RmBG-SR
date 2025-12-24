@@ -2,6 +2,12 @@
 
 一个基于 Web 的图片处理工具，集成了 AI 去背景和 4x 超分辨率功能。
 
+## 效果展示
+
+| 界面 | 处理结果 |
+|:---:|:---:|
+| ![界面](assets/demo1.png) | ![结果](assets/demo2.png) |
+
 ## 功能特性
 
 - **AI 去背景**：使用 [RMBG-2.0](https://huggingface.co/briaai/RMBG-2.0) 模型自动去除图片背景
