@@ -128,11 +128,13 @@ with gr.Blocks(title="RMBG-2.0 去背景 + 超分") as demo:
             order = gr.Radio(["先去背景", "先超分"], value="先去背景", label="处理顺序")
     
     with gr.Row():
-        gen_mask_btn = gr.Button("生成蒙版", variant="secondary")
-        apply_btn = gr.Button("应用并导出", variant="primary")
+        apply_btn = gr.Button("一键处理", variant="primary")
     
     # 高级选项 - 编辑蒙版
     with gr.Accordion("高级选项 - 编辑蒙版", open=False):
+        with gr.Row():
+            gen_mask_btn = gr.Button("生成蒙版", variant="secondary")
+            apply_edited_btn = gr.Button("使用编辑后的蒙版导出", variant="primary")
         with gr.Row():
             with gr.Column():
                 fill_color = gr.Radio(["白色(保留)", "黑色(删除)"], value="白色(保留)", label="点击填充颜色")
@@ -171,9 +173,39 @@ with gr.Blocks(title="RMBG-2.0 去背景 + 超分") as demo:
             return None
         return composite.convert("L")
     
+    # 一键处理：自动生成蒙版并导出
+    def one_click(image, th, fe, inv, bg_color, sr_method, enable_rmbg, order):
+        if image is None:
+            return None
+        mask = generate_mask(image, th, fe, inv) if enable_rmbg else None
+        if order == "先去背景":
+            result = do_rmbg(image, mask, bg_color) if enable_rmbg and mask else image
+            result = do_sr(result, sr_method)
+        else:
+            result = do_sr(image, sr_method)
+            if enable_rmbg and mask:
+                mask_resized = mask.resize(result.size, Image.LANCZOS) if sr_method != "无" else mask
+                result = do_rmbg(result, mask_resized, bg_color)
+        return result
+    
+    # 高级选项里用编辑过的蒙版导出
+    def apply_edited(image, mask, bg_color, sr_method, enable_rmbg, order):
+        if image is None:
+            return None
+        if order == "先去背景":
+            result = do_rmbg(image, mask, bg_color) if enable_rmbg and mask else image
+            result = do_sr(result, sr_method)
+        else:
+            result = do_sr(image, sr_method)
+            if enable_rmbg and mask:
+                mask_resized = mask.resize(result.size, Image.LANCZOS) if sr_method != "无" else mask
+                result = do_rmbg(result, mask_resized, bg_color)
+        return result
+    
     gen_mask_btn.click(on_gen_mask, [image_input, threshold, feather, invert], [mask_click, mask_editor])
     mask_click.select(on_click_fill, [image_input, mask_click, fill_color], [mask_click, mask_editor])
     mask_editor.change(on_editor_change, [mask_editor], mask_click)
-    apply_btn.click(apply_result, [image_input, mask_click, bg_color, sr_method, enable_rmbg, order], output)
+    apply_btn.click(one_click, [image_input, threshold, feather, invert, bg_color, sr_method, enable_rmbg, order], output)
+    apply_edited_btn.click(apply_edited, [image_input, mask_click, bg_color, sr_method, enable_rmbg, order], output)
 
 demo.launch(server_name="0.0.0.0", server_port=7860)
