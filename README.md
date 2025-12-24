@@ -6,7 +6,7 @@
 
 | 界面 | 处理结果 |
 |:---:|:---:|
-| ![界面](assets/demo1.png) | ![结果](assets/demo2.png) |
+| ![界面](assets/demo1.png) | ![蒙版编辑](assets/demo2.png) |
 
 ## 功能特性
 
